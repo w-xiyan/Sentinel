@@ -118,6 +118,7 @@ public class ContextUtil {
     }
 
     protected static Context trueEnter(String name, String origin) {
+        //1. 生成DefaultNode到contextNameNodeMap
         Context context = contextHolder.get();
         if (context == null) {
             Map<String, DefaultNode> localCacheNameMap = contextNameNodeMap;
@@ -150,6 +151,7 @@ public class ContextUtil {
                     }
                 }
             }
+            //2 然后生成Context设置到contextHolder的过程
             context = new Context(node, name);
             context.setOrigin(origin);
             contextHolder.set(context);

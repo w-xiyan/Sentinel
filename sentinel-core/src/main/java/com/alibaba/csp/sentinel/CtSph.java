@@ -125,6 +125,7 @@ public class CtSph implements Sph {
 
         if (context == null) {
             // Using default context.
+            //初始化上下文
             context = InternalContextUtil.internalEnter(Constants.CONTEXT_DEFAULT_NAME);
         }
 
@@ -133,6 +134,7 @@ public class CtSph implements Sph {
             return new CtEntry(resourceWrapper, null, context);
         }
 
+        //初始化责任链
         ProcessorSlot<Object> chain = lookProcessChain(resourceWrapper);
 
         /*
@@ -192,6 +194,7 @@ public class CtSph implements Sph {
      * @return {@link ProcessorSlotChain} of the resource
      */
     ProcessorSlot<Object> lookProcessChain(ResourceWrapper resourceWrapper) {
+        //支持spi加载自定义的责任链bulider，如果没有定义则使用默认的DefaultSlotChainBuilder进行加载
         ProcessorSlotChain chain = chainMap.get(resourceWrapper);
         if (chain == null) {
             synchronized (LOCK) {
