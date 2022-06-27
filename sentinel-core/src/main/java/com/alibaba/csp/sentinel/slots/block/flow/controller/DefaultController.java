@@ -45,9 +45,19 @@ public class DefaultController implements TrafficShapingController {
         return canPass(node, acquireCount, false);
     }
 
+    /**
+     *   快速失败的流控效果中的通过性判断
+     * @param node resource node
+     * @param acquireCount count to acquire
+     * @param prioritized whether the request is prioritized
+     * @return
+     */
     @Override
     public boolean canPass(Node node, int acquireCount, boolean prioritized) {
+        // 获取当前时间窗中已经统计的数据
         int curCount = avgUsedTokens(node);
+        // 若已经统计的数据与本次请求的数量和 大于 设置的阈值，则返回false，表示没有通过检测
+        // 若小于等于阈值，则返回true，表示通过检测
         if (curCount + acquireCount > count) {
             if (prioritized && grade == RuleConstant.FLOW_GRADE_QPS) {
                 long currentTime;

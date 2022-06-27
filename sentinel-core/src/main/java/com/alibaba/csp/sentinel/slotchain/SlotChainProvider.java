@@ -36,11 +36,13 @@ public final class SlotChainProvider {
      * @return new created slot chain
      */
     public static ProcessorSlotChain newSlotChain() {
+        // 若builder不为null，则直接使用builder构建一个chain，否则先创建一个builder
         if (slotChainBuilder != null) {
             return slotChainBuilder.build();
         }
 
         // Resolve the slot chain builder SPI.
+        //通过SPI加载sentinel-core模板中com.alibaba.csp.sentinel.demo.slotchain.DemoSlotChainBuilder的DefaultSlotChainBuilder
         slotChainBuilder = SpiLoader.of(SlotChainBuilder.class).loadFirstInstanceOrDefault();
 
         if (slotChainBuilder == null) {
