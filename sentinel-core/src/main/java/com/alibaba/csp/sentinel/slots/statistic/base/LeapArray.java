@@ -77,6 +77,7 @@ public abstract class LeapArray<T> {
      * @return the bucket at current timestamp
      */
     public WindowWrap<T> currentWindow() {
+        // 获取当前时间点所在的样本窗口
         return currentWindow(TimeUtil.currentTimeMillis());
     }
 
@@ -98,8 +99,10 @@ public abstract class LeapArray<T> {
     protected abstract WindowWrap<T> resetWindowTo(WindowWrap<T> windowWrap, long startTime);
 
     private int calculateTimeIdx(/*@Valid*/ long timeMillis) {
+        // 计算出当前时间在哪个样本窗口
         long timeId = timeMillis / windowLengthInMs;
         // Calculate current index so we can map the timestamp to the leap array.
+        //计算当前索引，以便我们可以将时间戳映射到跳跃数组
         return (int)(timeId % array.length());
     }
 
@@ -118,8 +121,10 @@ public abstract class LeapArray<T> {
             return null;
         }
 
+        // 计算当前时间所在的样本窗口id，即在计算数组LeapArray中的索引
         int idx = calculateTimeIdx(timeMillis);
         // Calculate current bucket start time.
+        // 计算当前样本窗口的开始时间点
         long windowStart = calculateWindowStart(timeMillis);
 
         /*
@@ -130,7 +135,9 @@ public abstract class LeapArray<T> {
          * (3) Bucket is deprecated, then reset current bucket and clean all deprecated buckets.
          */
         while (true) {
+            // 获取到当前时间所在的样本窗口
             WindowWrap<T> old = array.get(idx);
+            // 若当前时间所在样本窗口为null，说明该样本窗口还不存在，则创建一个
             if (old == null) {
                 /*
                  *     B0       B1      B2    NULL      B4
@@ -144,7 +151,9 @@ public abstract class LeapArray<T> {
                  * then try to update circular array via a CAS operation. Only one thread can
                  * succeed to update, while other threads yield its time slice.
                  */
+                // 创建一个时间窗
                 WindowWrap<T> window = new WindowWrap<T>(windowLengthInMs, windowStart, newEmptyBucket(timeMillis));
+                // 通过CAS方式将新建窗口放入到array
                 if (array.compareAndSet(idx, null, window)) {
                     // Successfully updated, return the created bucket.
                     return window;
@@ -152,6 +161,8 @@ public abstract class LeapArray<T> {
                     // Contention failed, the thread will yield its time slice to wait for bucket available.
                     Thread.yield();
                 }
+                // 若当前样本窗口的起始时间点与计算出的样本窗口起始时间点相同，
+                // 则说明这两个是同一个样本窗口
             } else if (windowStart == old.windowStart()) {
                 /*
                  *     B0       B1      B2     B3      B4
@@ -165,6 +176,9 @@ public abstract class LeapArray<T> {
                  * that means the time is within the bucket, so directly return the bucket.
                  */
                 return old;
+
+                // 若当前样本窗口的起始时间点 大于 计算出的样本窗口起始时间点，
+                // 说明计算出的样本窗口已经过时了，需要将原来的样本窗口替换
             } else if (windowStart > old.windowStart()) {
                 /*
                  *   (old)
@@ -186,6 +200,7 @@ public abstract class LeapArray<T> {
                 if (updateLock.tryLock()) {
                     try {
                         // Successfully get the update lock, now we reset the bucket.
+                        // 替换掉老的样本窗口
                         return resetWindowTo(old, windowStart);
                     } finally {
                         updateLock.unlock();
@@ -268,6 +283,8 @@ public abstract class LeapArray<T> {
     }
 
     public boolean isWindowDeprecated(long time, WindowWrap<T> windowWrap) {
+        // 当前时间与当前样本窗口的时间差 大于 时间窗长度，
+        // 说明当前样本窗口已经过时
         return time - windowWrap.windowStart() > intervalInMs;
     }
 
@@ -333,11 +350,14 @@ public abstract class LeapArray<T> {
         int size = array.length();
         List<T> result = new ArrayList<T>(size);
 
+        // 逐个遍历array中的每一个样本窗口实例
         for (int i = 0; i < size; i++) {
             WindowWrap<T> windowWrap = array.get(i);
+            // 若当前遍历实例为空或已经过时，则继续下一个
             if (windowWrap == null || isWindowDeprecated(timeMillis, windowWrap)) {
                 continue;
             }
+            // 将当前遍历的样本窗口统计的数据记录到result中
             result.add(windowWrap.value());
         }
         return result;

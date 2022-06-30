@@ -104,6 +104,7 @@ public class MetricBucket {
     }
 
     public void addPass(int n) {
+        // 向pass维度中增加统计数据
         add(MetricEvent.PASS, n);
     }
 

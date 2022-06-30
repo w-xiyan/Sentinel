@@ -93,7 +93,11 @@ public class StatisticNode implements Node {
      * Holds statistics of the recent {@code INTERVAL} milliseconds. The {@code INTERVAL} is divided into time spans
      * by given {@code sampleCount}.
      */
-    private transient volatile Metric rollingCounterInSecond = new ArrayMetric(SampleCountProperty.SAMPLE_COUNT,
+    // 定义了一个使用数组保存数据的计量器
+    private transient volatile Metric rollingCounterInSecond =
+            // SAMPLE_COUNT，样本窗口数量，默认值为2
+            // INTERVAL，时间窗长度，默认值1000毫秒
+            new ArrayMetric(SampleCountProperty.SAMPLE_COUNT,
         IntervalProperty.INTERVAL);
 
     /**
@@ -198,6 +202,9 @@ public class StatisticNode implements Node {
 
     @Override
     public double passQps() {
+        // rollingCounterInSecond.pass() 当前时间窗中统计的通过的请求数量
+        // rollingCounterInSecond.getWindowIntervalInSec() 时间窗长度
+        // 这两个数相除，计算出的就是QPS
         return rollingCounterInSecond.pass() / rollingCounterInSecond.getWindowIntervalInSec();
     }
 
@@ -244,6 +251,7 @@ public class StatisticNode implements Node {
 
     @Override
     public void addPassRequest(int count) {
+        // 为滑动计数器增加本次访问的数据
         rollingCounterInSecond.addPass(count);
         rollingCounterInMinute.addPass(count);
     }

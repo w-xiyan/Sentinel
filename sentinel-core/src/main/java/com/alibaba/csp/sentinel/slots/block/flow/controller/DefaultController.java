@@ -79,9 +79,12 @@ public class DefaultController implements TrafficShapingController {
     }
 
     private int avgUsedTokens(Node node) {
+        // 若没有选择出node，则说明没有做统计工作，直接返回0
         if (node == null) {
             return DEFAULT_AVG_USED_TOKENS;
         }
+        // 若阈值类型为线程数，则直接返回当前的线程数量；
+        // 若阈值类型为QPS，则返回统计的当前的QPS
         return grade == RuleConstant.FLOW_GRADE_THREAD ? node.curThreadNum() : (int)(node.passQps());
     }
 
